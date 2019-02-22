@@ -2,10 +2,10 @@
 // Chair of Algorithms and Data Structures.
 // Markus Näther <naetherm@informatik.uni-freiburg.de>
 
-module derelict.curand;
+module derelict.curand.curand;
 
 import derelict.util.loader;
-import derelct.cuda;
+import derelict.cuda.runtimeapi;
 
 private
 {
@@ -29,8 +29,69 @@ private
 }
 
 
+// curand_discrete.h:
 
 
+/**
+ * CURAND distribution
+ */
+/** \cond UNHIDE_TYPEDEFS */
+alias curandDistribution_st = double;
+alias curandDistribution_t = curandDistribution_st*;
+/** \endcond */
+/**
+ * CURAND distribution M2
+ */
+/** \cond UNHIDE_TYPEDEFS */
+alias curandHistogramM2K_st = uint;
+alias curandHistogramM2K_t = curandHistogramM2K_st*;
+alias curandHistogramM2V_st = curandDistribution_st;
+alias curandHistogramM2V_t = curandHistogramM2V_st *;
+
+alias curandDiscreteDistribution_t = curandDiscreteDistribution_st *;
+/** \endcond */
+
+struct curandDistributionShift_st {
+  curandDistribution_t probability;
+  curandDistribution_t host_probability;
+  uint shift;
+  uint length;
+  uint host_gen;
+};
+
+alias curandDistributionShift_t = curandDistributionShift_st*;
+
+struct curandHistogramM2_st {
+  curandHistogramM2V_t V;
+  curandHistogramM2V_t host_V;
+  curandHistogramM2K_t K;
+  curandHistogramM2K_t host_K;
+  uint host_gen;
+};
+
+
+struct curandDistributionM2Shift_st {
+  curandHistogramM2_t histogram;
+  curandHistogramM2_t host_histogram;
+  uint shift;
+  uint length;
+  uint host_gen;
+};
+
+struct curandDiscreteDistribution_st {
+  curandDiscreteDistribution_t self_host_ptr;
+  curandDistributionM2Shift_t M2;
+  curandDistributionM2Shift_t host_M2;
+  double stddev;
+  double mean;
+  curandMethod_t method;
+  uint host_gen;
+};
+
+alias curandDistributionM2Shift_t = curandDistributionM2Shift_st*;
+alias curandHistogramM2_t = curandHistogramM2_st*;
+
+// curand.h
 
 /**
  * CURAND function call status types
@@ -147,28 +208,6 @@ struct curandGenerator_st;
 alias curandGenerator_t = curandGenerator_st *;
 /** \endcond */
 
-/**
- * CURAND distribution
- */
-/** \cond UNHIDE_TYPEDEFS */
-alias curandDistribution_st = double;
-alias curandDistribution_t = curandDistribution_st*;
-alias curandDistributionShift_t = curandDistributionShift_st*;
-/** \endcond */
-/**
- * CURAND distribution M2
- */
-/** \cond UNHIDE_TYPEDEFS */
-alias curandDistributionM2Shift_t = curandDistributionM2Shift_st*;
-alias curandHistogramM2_t = curandHistogramM2_st*;
-alias curandHistogramM2K_st = uint;
-alias curandHistogramM2K_t = curandHistogramM2K_st*;
-alias curandHistogramM2V_st = curandDistribution_st;
-alias curandHistogramM2V_t = curandHistogramM2V_st *;
-
-alias curandDiscreteDistribution_t = curandDiscreteDistribution_st *;
-/** \endcond */
-
 /*
  * CURAND METHOD
  */
@@ -201,35 +240,35 @@ extern(System) nothrow {
 
 extern(System) @nogc nothrow {
 
-da_curandCreateGenerator = curandStatus_t function(curandGenerator_t *generator, curandRngType_t rng_type);
-da_curandCreateGeneratorHost = curandStatus_t function(curandGenerator_t *generator, curandRngType_t rng_type);
-da_curandDestroyGenerator = curandStatus_t function(curandGenerator_t generator);
-da_curandGetVersion = curandStatus_t function(int *version);
-da_curandGetProperty = curandStatus_t function(libraryPropertyType type, int *value);
-da_curandSetStream = curandStatus_t function(curandGenerator_t generator, cudaStream_t stream);
-da_curandSetPseudoRandomGeneratorSeed = curandStatus_t function(curandGenerator_t generator, unsigned long long seed);
-da_curandSetGeneratorOffset = curandStatus_t function(curandGenerator_t generator, unsigned long long offset);
-da_curandSetGeneratorOrdering = curandStatus_t function(curandGenerator_t generator, curandOrdering_t order);
-da_curandSetQuasiRandomGeneratorDimensions = curandStatus_t function(curandGenerator_t generator, unsigned int num_dimensions);
-da_curandGenerate = curandStatus_t function(curandGenerator_t generator, unsigned int *outputPtr, size_t num);
-da_curandGenerateLongLong = curandStatus_t function(curandGenerator_t generator, unsigned long long *outputPtr, size_t num);
-da_curandGenerateUniform = curandStatus_t function(curandGenerator_t generator, float *outputPtr, size_t num);
-da_curandGenerateUniformDouble = curandStatus_t function(curandGenerator_t generator, double *outputPtr, size_t num);
-da_curandGenerateNormal = curandStatus_t function(curandGenerator_t generator, float *outputPtr, size_t n, float mean, float stddev);
-da_curandGenerateNormalDouble = curandStatus_t function(curandGenerator_t generator, double *outputPtr, size_t n, double mean, double stddev);
-da_curandGenerateLogNormal = curandStatus_t function(curandGenerator_t generator, float *outputPtr, size_t n, float mean, float stddev);
-da_curandGenerateLogNormalDouble = curandStatus_t function(curandGenerator_t generator, double *outputPtr,size_t n, double mean, double stddev);
-da_curandCreatePoissonDistribution = curandStatus_t function(double lambda, curandDiscreteDistribution_t *discrete_distribution);
-da_curandDestroyDistribution = curandStatus_t function(curandDiscreteDistribution_t discrete_distribution);
-da_curandGeneratePoisson = curandStatus_t function(curandGenerator_t generator, unsigned int *outputPtr,size_t n, double lambda);
-da_curandGeneratePoissonMethod = curandStatus_t function(curandGenerator_t generator, unsigned int *outputPtr,size_t n, double lambda, curandMethod_t method);
-da_curandGenerateBinomial = curandStatus_t function(curandGenerator_t generator, unsigned int *outputPtr,size_t num, unsigned int n, double p);
-da_curandGenerateBinomialMethod = curandStatus_t function(curandGenerator_t generator,unsigned int *outputPtr,size_t num, unsigned int n, double p,curandMethod_t method);
-da_curandGenerateSeeds = curandStatus_t function(curandGenerator_t generator);
-da_curandGetDirectionVectors32 = curandStatus_t function(curandDirectionVectors32_t *vectors[], curandDirectionVectorSet_t set);
-da_curandGetScrambleConstants32 = curandStatus_t function(unsigned int * * constants);
-da_curandGetDirectionVectors64 = curandStatus_t function(curandDirectionVectors64_t *vectors[], curandDirectionVectorSet_t set);
-da_curandGetScrambleConstants64 = curandStatus_t function(unsigned long long * * constants);
+  alias da_curandCreateGenerator = curandStatus_t function(curandGenerator_t *generator, curandRngType_t rng_type);
+  alias da_curandCreateGeneratorHost = curandStatus_t function(curandGenerator_t *generator, curandRngType_t rng_type);
+  alias da_curandDestroyGenerator = curandStatus_t function(curandGenerator_t generator);
+  alias da_curandGetVersion = curandStatus_t function(int *pVersion);
+  alias da_curandGetProperty = curandStatus_t function(libraryPropertyType type, int *value);
+  alias da_curandSetStream = curandStatus_t function(curandGenerator_t generator, cudaStream_t stream);
+  alias da_curandSetPseudoRandomGeneratorSeed = curandStatus_t function(curandGenerator_t generator, ulong seed);
+  alias da_curandSetGeneratorOffset = curandStatus_t function(curandGenerator_t generator, ulong offset);
+  alias da_curandSetGeneratorOrdering = curandStatus_t function(curandGenerator_t generator, curandOrdering_t order);
+  alias da_curandSetQuasiRandomGeneratorDimensions = curandStatus_t function(curandGenerator_t generator, uint num_dimensions);
+  alias da_curandGenerate = curandStatus_t function(curandGenerator_t generator, uint *outputPtr, size_t num);
+  alias da_curandGenerateLongLong = curandStatus_t function(curandGenerator_t generator, ulong *outputPtr, size_t num);
+  alias da_curandGenerateUniform = curandStatus_t function(curandGenerator_t generator, float *outputPtr, size_t num);
+  alias da_curandGenerateUniformDouble = curandStatus_t function(curandGenerator_t generator, double *outputPtr, size_t num);
+  alias da_curandGenerateNormal = curandStatus_t function(curandGenerator_t generator, float *outputPtr, size_t n, float mean, float stddev);
+  alias da_curandGenerateNormalDouble = curandStatus_t function(curandGenerator_t generator, double *outputPtr, size_t n, double mean, double stddev);
+  alias da_curandGenerateLogNormal = curandStatus_t function(curandGenerator_t generator, float *outputPtr, size_t n, float mean, float stddev);
+  alias da_curandGenerateLogNormalDouble = curandStatus_t function(curandGenerator_t generator, double *outputPtr,size_t n, double mean, double stddev);
+  alias da_curandCreatePoissonDistribution = curandStatus_t function(double lambda, curandDiscreteDistribution_t *discrete_distribution);
+  alias da_curandDestroyDistribution = curandStatus_t function(curandDiscreteDistribution_t discrete_distribution);
+  alias da_curandGeneratePoisson = curandStatus_t function(curandGenerator_t generator, uint *outputPtr,size_t n, double lambda);
+  alias da_curandGeneratePoissonMethod = curandStatus_t function(curandGenerator_t generator, uint *outputPtr,size_t n, double lambda, curandMethod_t method);
+  //alias da_curandGenerateBinomial = curandStatus_t function(curandGenerator_t generator, uint *outputPtr,size_t num, uint n, double p);
+  //alias da_curandGenerateBinomialMethod = curandStatus_t function(curandGenerator_t generator,uint *outputPtr,size_t num, uint n, double p,curandMethod_t method);
+  alias da_curandGenerateSeeds = curandStatus_t function(curandGenerator_t generator);
+  alias da_curandGetDirectionVectors32 = curandStatus_t function(curandDirectionVectors32_t *[] vectors, curandDirectionVectorSet_t set);
+  alias da_curandGetScrambleConstants32 = curandStatus_t function(uint * * constants);
+  alias da_curandGetDirectionVectors64 = curandStatus_t function(curandDirectionVectors64_t *[] vectors, curandDirectionVectorSet_t set);
+  alias da_curandGetScrambleConstants64 = curandStatus_t function(ulong * * constants);
 
 }
 
@@ -257,8 +296,8 @@ __gshared
   da_curandDestroyDistribution curandDestroyDistribution;
   da_curandGeneratePoisson curandGeneratePoisson;
   da_curandGeneratePoissonMethod curandGeneratePoissonMethod;
-  da_curandGenerateBinomial curandGenerateBinomial;
-  da_curandGenerateBinomialMethod curandGenerateBinomialMethod;
+  //da_curandGenerateBinomial curandGenerateBinomial;
+  //da_curandGenerateBinomialMethod curandGenerateBinomialMethod;
   da_curandGenerateSeeds curandGenerateSeeds;
   da_curandGetDirectionVectors32 curandGetDirectionVectors32;
   da_curandGetScrambleConstants32 curandGetScrambleConstants32;
@@ -267,7 +306,7 @@ __gshared
 }
 
 // Runtime API loader
-class DerelictCuBLASLoader : SharedLibLoader
+class DerelictCuRANDLoader : SharedLibLoader
 {
   protected
   {
@@ -295,8 +334,8 @@ class DerelictCuBLASLoader : SharedLibLoader
       bindFunc(cast(void**)&curandDestroyDistribution, "curandDestroyDistribution");
       bindFunc(cast(void**)&curandGeneratePoisson, "curandGeneratePoisson");
       bindFunc(cast(void**)&curandGeneratePoissonMethod, "curandGeneratePoissonMethod");
-      bindFunc(cast(void**)&curandGenerateBinomial, "curandGenerateBinomial");
-      bindFunc(cast(void**)&curandGenerateBinomialMethod, "curandGenerateBinomialMethod");
+      //bindFunc(cast(void**)&curandGenerateBinomial, "curandGenerateBinomial");
+      //bindFunc(cast(void**)&curandGenerateBinomialMethod, "curandGenerateBinomialMethod");
       bindFunc(cast(void**)&curandGenerateSeeds, "curandGenerateSeeds");
       bindFunc(cast(void**)&curandGetDirectionVectors32, "curandGetDirectionVectors32");
       bindFunc(cast(void**)&curandGetScrambleConstants32, "curandGetScrambleConstants32");
@@ -314,9 +353,9 @@ class DerelictCuBLASLoader : SharedLibLoader
   }
 }
 
-__gshared DerelictCuBLASLoader DerelictCuBLAS;
+__gshared DerelictCuRANDLoader DerelictCuRAND;
 
 shared static this()
 {
-  DerelictCuBLAS = new DerelictCuBLASLoader();
+  DerelictCuRAND = new DerelictCuRANDLoader();
 }
