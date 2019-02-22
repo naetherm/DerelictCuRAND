@@ -1,0 +1,19 @@
+{
+    "name": "derelict-curand",
+    "description": "A dynamic binding to the CUBLAS API.",
+    "homepage": "https://github.com/naetherm/DerelictCuRAND",
+    "license": "MIT",
+    "authors": [
+        "Markus Naether (naetherm)"
+    ],
+
+    "importPaths": ["source"],
+    "sourcePaths": ["source"],
+
+    "targetName": "DerelictCuRAND",
+    "targetPath": "lib",
+
+    "dependencies": {
+        "derelict-util": "~>3.0.0-beta.1"
+    }
+}
