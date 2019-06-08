@@ -1,16 +1,16 @@
 DerelictCuRAND
 ============
 
-A dynamic binding to CuRAND of CUDA for the D Programming Language.
+A dynamic binding to cuRAND of CUDA for the D Programming Language.
 
 
 Please see the pages [Building and Linking Derelict][2] and [Using Derelict][3], in the Derelict documentation, for information on how to build DerelictCUDA and load the CUDA library at run time. In the meantime, here's some sample code.
 
 ```D
-import derelict.cublas;
+import derelict.curand;
 
 void main() {
-  DerelictCuBLAS.load();
+  DerelictCuRAND.load();
   ...
 }
 ```
